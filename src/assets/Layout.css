@@ -1,0 +1,178 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+/* ─── Header ─── */
+
+.layout-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.layout-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 32px;
+  flex-shrink: 0;
+}
+
+.layout-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #4f9cf9, #1e6fd4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.layout-logo svg { width: 15px; height: 15px; color: white; }
+
+.layout-brand-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* ─── Nav ─── */
+
+.layout-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.layout-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.layout-nav-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.layout-nav-item:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.layout-nav-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 500;
+  border: 1px solid rgba(79,156,249,0.18);
+}
+
+/* ─── User info ─── */
+
+.layout-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.layout-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.layout-username {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.layout-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+
+.badge-admin {
+  background: rgba(168,85,247,0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168,85,247,0.25);
+}
+
+.badge-operator {
+  background: rgba(251,146,60,0.12);
+  color: #fb923c;
+  border: 1px solid rgba(251,146,60,0.22);
+}
+
+.badge-user {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(79,156,249,0.2);
+}
+
+.layout-logout-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.layout-logout-btn:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.25);
+  color: #f87171;
+}
+
+.layout-logout-btn svg { width: 15px; height: 15px; }
+
+/* ─── Content ─── */
+
+.layout-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
