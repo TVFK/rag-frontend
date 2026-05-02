@@ -1,4 +1,4 @@
-const BASE = 'api/rag/api/v1';
+const BASE = 'api/rag/api';
 
 function getToken() {
   return localStorage.getItem('rag-jwt') ?? '';

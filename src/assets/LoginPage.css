@@ -221,3 +221,13 @@
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+.login-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  margin: auto;   /* сработает как fallback */
+}

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { apiUploadDocument } from '../api/api.js';
 import '../assets/OperatorPage.css';
+import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -89,6 +90,7 @@ function UploadItem({ item, onRemove }) {
 }
 
 export default function OperatorPage() {
+  useAuthCheck(['OPERATOR', 'ADMIN']);
   const [items, setItems]     = useState([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);

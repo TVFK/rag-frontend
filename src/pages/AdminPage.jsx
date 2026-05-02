@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGetUsers, apiCreateUser, apiUpdateUserRole, apiDeleteUser } from '../api/api.js';
 import '../assets/AdminPage.css';
+import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const ROLES = ['USER', 'OPERATOR', 'ADMIN'];
 
@@ -143,9 +144,9 @@ function CreateUserModal({ onClose, onCreated }) {
   );
 }
 
-/* ─── Admin page ─────────────────────────────────────────────────────────── */
 
 export default function AdminPage({ currentUsername }) {
+  useAuthCheck(['ADMIN']);
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
