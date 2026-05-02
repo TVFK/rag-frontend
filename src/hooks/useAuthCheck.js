@@ -11,7 +11,7 @@ export default function useAuthCheck(allowedRoles) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('rag-jwt');
     if (!token) {
       navigate('/login', { replace: true });
       return;
