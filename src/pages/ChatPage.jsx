@@ -1,6 +1,6 @@
 // src/pages/ChatPage.jsx
 import { useState, useRef, useEffect, useCallback } from 'react';
-import '../App.css';  // стили остались там же
+import '../assets/ChatPage.css';  // стили остались там же
 import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const RAG_API_URL = import.meta.env.VITE_RAG_API_URL;
