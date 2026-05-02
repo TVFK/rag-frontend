@@ -1,6 +1,6 @@
-// src/pages/ChatPage.jsx
 import { useState, useRef, useEffect, useCallback } from 'react';
-import '../assets/ChatPage.css';  // стили остались там же
+import { Link } from 'react-router-dom';
+import '../assets/ChatPage.css';
 import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const RAG_API_URL = import.meta.env.VITE_RAG_API_URL;
@@ -123,6 +123,19 @@ const IconWarn = () => (
   </svg>
 );
 
+const IconShield = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+
+const IconSettings = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+
 // ─── Message content renderer ─────────────────────────────────────────────────
 
 function MessageContent({ text, streaming }) {
@@ -166,7 +179,7 @@ function Message({ role, content, timestamp, streaming }) {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected, collapsed }) {
+function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected, collapsed, role }) {
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -215,6 +228,21 @@ function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected,
       </div>
 
       <div className="sidebar-footer">
+        {(role === 'OPERATOR' || role === 'ADMIN') && (
+          <div className="sidebar-nav-links">
+            <Link to="/operator" className="sidebar-nav-link">
+              <IconShield />
+              Панель оператора
+            </Link>
+            {role === 'ADMIN' && (
+              <Link to="/admin" className="sidebar-nav-link">
+                <IconSettings />
+                Админ-панель
+              </Link>
+            )}
+          </div>
+        )}
+
         <div className="sidebar-status">
           <span className={`status-dot${connected ? '' : ' offline'}`} />
           {connected ? 'Сервер онлайн' : 'Нет соединения'}
@@ -226,7 +254,7 @@ function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected,
 
 // ─── ChatPage ─────────────────────────────────────────────────────────────────
 
-export default function ChatPage() {
+export default function ChatPage({ auth }) {
   useAuthCheck(['USER', 'OPERATOR', 'ADMIN']);
   // ── Init state from localStorage ──────────────────────────────────────────
   const [chats, setChats] = useState(() => {
@@ -473,6 +501,7 @@ export default function ChatPage() {
         onDelete={deleteChat}
         connected={connected}
         collapsed={!sidebarOpen}
+        role={auth.role}
       />
 
       <div className="main">
