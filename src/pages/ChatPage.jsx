@@ -403,9 +403,12 @@ export default function ChatPage({ auth }) {
     (async () => {
       try {
         const response = await fetch(url, {
-          signal: abortController.signal,
-          headers: { Accept: 'text/event-stream' },
-        });
+      signal: abortController.signal,
+      headers: {
+        'Accept': 'text/event-stream',
+        'Authorization': `Bearer ${getToken()}`, 
+      },
+    });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

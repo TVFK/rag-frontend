@@ -1,64 +1,79 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
-import ChatPage from './pages/ChatPage';
+import { useState, useEffect } from 'react';
+import { TOKEN_KEY, ROLE_KEY, USER_KEY } from './api/constants.js';
+import ChatPage     from './pages/ChatPage';
 import OperatorPage from './pages/OperatorPage';
-import LoginPage from './pages/LoginPage';
-import AdminPage from './pages/AdminPage';
-import './App.css';
+import LoginPage    from './pages/LoginPage';
+import AdminPage    from './pages/AdminPage';
+
+function loadAuth() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const role  = localStorage.getItem(ROLE_KEY);
+  const user  = localStorage.getItem(USER_KEY);
+  return token ? { token, role, user } : null;
+}
 
 export default function App() {
-  const [auth, setAuth] = useState(() => {
-    // Восстанавливаем сессию из localStorage при перезагрузке
-    const token = localStorage.getItem('rag-jwt');
-    const role  = localStorage.getItem('rag-role');
-    const user  = localStorage.getItem('rag-user');
-    return token ? { token, role, user } : null;
-  });
+  const [auth, setAuth] = useState(loadAuth);
 
   const handleLogin = (token, role, username) => {
-    localStorage.setItem('rag-jwt',  token);
-    localStorage.setItem('rag-role', role);
-    localStorage.setItem('rag-user', username);
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(ROLE_KEY,  role);
+    localStorage.setItem(USER_KEY,  username);
     setAuth({ token, role, user: username });
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('rag-jwt');
-    localStorage.removeItem('rag-role');
-    localStorage.removeItem('rag-user');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(USER_KEY);
     setAuth(null);
   };
 
-  // Слушаем истечение токена (из handleResponse в api.js)
-  useState(() => {
+  // Глобальный обработчик истечения токена (из api.js)
+  useEffect(() => {
     const handler = () => handleLogout();
     window.addEventListener('auth:expired', handler);
     return () => window.removeEventListener('auth:expired', handler);
-  });
-
-  if (!auth) {
-    return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
-        </Routes>
-      </BrowserRouter>
-    );
-  }
+  }, []);
 
   return (
     <BrowserRouter>
       <div className="app">
         <Routes>
-          <Route path="/" element={<ChatPage onLogout={handleLogout} auth={auth} />} />
-          {(auth.role === 'OPERATOR' || auth.role === 'ADMIN') && (
-            <Route path="/operator" element={<OperatorPage onLogout={handleLogout} auth={auth} />} />
-          )}
-          {auth.role === 'ADMIN' && (
-            <Route path="/admin" element={<AdminPage onLogout={handleLogout} auth={auth} />} />
-          )}
-          {/* Редиректим неизвестные пути */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/login"
+            element={
+              auth
+                ? <Navigate to="/" replace />
+                : <LoginPage onLogin={handleLogin} />
+            }
+          />
+          <Route
+            path="/"
+            element={
+              auth
+                ? <ChatPage auth={auth} onLogout={handleLogout} />
+                : <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/operator"
+            element={
+              auth && (auth.role === 'OPERATOR' || auth.role === 'ADMIN')
+                ? <OperatorPage auth={auth} onLogout={handleLogout} />
+                : <Navigate to={auth ? '/' : '/login'} replace />
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              auth && auth.role === 'ADMIN'
+                ? <AdminPage auth={auth} onLogout={handleLogout} />
+                : <Navigate to={auth ? '/' : '/login'} replace />
+            }
+          />
+          <Route path="*" element={<Navigate to={auth ? '/' : '/login'} replace />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -1,7 +1,7 @@
-const BASE = 'api/rag';
+import { TOKEN_KEY, ROLE_KEY, USER_KEY, API_BASE } from './constants.js';
 
-function getToken() {
-  return localStorage.getItem('rag-jwt') ?? '';
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY) ?? '';
 }
 
 function authHeaders(extra = {}) {
@@ -12,26 +12,37 @@ function authHeaders(extra = {}) {
   };
 }
 
+function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(USER_KEY);
+}
+
 async function handleResponse(res) {
-  if (res.status === 401 || res.status === 403) {
-    localStorage.removeItem('rag-jwt');
-    localStorage.removeItem('rag-user');
+  if (res.status === 401) {
+    clearAuth();
     window.dispatchEvent(new Event('auth:expired'));
-    throw new Error(res.status === 403 ? 'Нет доступа' : 'Сессия истекла');
+    throw new Error('401 Сессия истекла');
+  }
+  // 403 — нет доступа, но НЕ разлогиниваем
+  if (res.status === 403) {
+    throw new Error('403 Нет доступа');
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(text || `HTTP ${res.status}`);
   }
-  const ct = res.headers.get('content-type') ?? '';
-  if (ct.includes('application/json')) return res.json();
-  return res.text();
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 export async function apiLogin(username, password) {
-  const res = await fetch(`${BASE}/api/auth/login`, {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -39,8 +50,7 @@ export async function apiLogin(username, password) {
   return handleResponse(res);
 }
 
-// ─── Documents (OPERATOR, ADMIN) ─────────────────────────────────────────────
-
+// ─── Documents (OPERATOR, ADMIN) ──────────────────────────────────────────────
 export async function apiUploadDocument(file, onProgress) {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -57,11 +67,12 @@ export async function apiUploadDocument(file, onProgress) {
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.responseText);
-      } else if (xhr.status === 401 || xhr.status === 403) {
-        localStorage.removeItem('rag-jwt');
-        localStorage.removeItem('rag-user');
+      } else if (xhr.status === 401) {
+        clearAuth();
         window.dispatchEvent(new Event('auth:expired'));
-        reject(new Error('Нет доступа'));
+        reject(new Error('Сессия истекла'));
+      } else if (xhr.status === 403) {
+        reject(new Error('Нет доступа')); // НЕ разлогиниваем
       } else {
         reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText}`));
       }
@@ -69,19 +80,19 @@ export async function apiUploadDocument(file, onProgress) {
 
     xhr.onerror = () => reject(new Error('Ошибка сети'));
 
-    xhr.open('POST', `${BASE}/api/documents/upload`);
+    xhr.open('POST', `${API_BASE}/api/documents/upload`);
     xhr.setRequestHeader('Authorization', `Bearer ${getToken()}`);
     xhr.send(formData);
   });
 }
 
 export async function apiGetDocuments() {
-  const res = await fetch(`${BASE}/api/documents`, { headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/api/documents`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function apiDeleteDocument(id) {
-  const res = await fetch(`${BASE}/api/documents/${id}`, {
+  const res = await fetch(`${API_BASE}/api/documents/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -89,14 +100,13 @@ export async function apiDeleteDocument(id) {
 }
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
-
 export async function apiGetUsers() {
-  const res = await fetch(`${BASE}/api/admin/users`, { headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/api/admin/users`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function apiCreateUser(username, password, role) {
-  const res = await fetch(`${BASE}/api/admin/users`, {
+  const res = await fetch(`${API_BASE}/api/admin/users`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ username, password, role }),
@@ -105,7 +115,7 @@ export async function apiCreateUser(username, password, role) {
 }
 
 export async function apiUpdateUserRole(id, role) {
-  const res = await fetch(`${BASE}/api/admin/users/${id}/role`, {
+  const res = await fetch(`${API_BASE}/api/admin/users/${id}/role`, {
     method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify({ role }),
@@ -114,17 +124,14 @@ export async function apiUpdateUserRole(id, role) {
 }
 
 export async function apiDeleteUser(id) {
-  const res = await fetch(`${BASE}/api/admin/users/${id}`, {
+  const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
   });
   return handleResponse(res);
 }
 
-// ─── SSE stream helper (used by chat) ────────────────────────────────────────
-
+// ─── Chat SSE URL ─────────────────────────────────────────────────────────────
 export function buildAnswerUrl(question) {
-  return `${BASE}/api/v1/answer?question=${encodeURIComponent(question)}`;
+  return `${API_BASE}/api/answer?question=${encodeURIComponent(question)}`;
 }
-
-export { getToken };
