@@ -2,8 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/ChatPage.css';
 import useAuthCheck from '../hooks/useAuthCheck.js';
-
-const RAG_API_URL = import.meta.env.VITE_RAG_API_URL;
+import { getToken, buildAnswerUrl } from '../api/api.js';
 
 const SUGGESTIONS = [
   'Как создать новый проект?',
@@ -256,6 +255,7 @@ function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected,
 
 export default function ChatPage({ auth }) {
   useAuthCheck(['USER', 'OPERATOR', 'ADMIN']);
+
   // ── Init state from localStorage ──────────────────────────────────────────
   const [chats, setChats] = useState(() => {
     const saved = loadChats();
@@ -396,19 +396,21 @@ export default function ChatPage({ auth }) {
       updateActiveMessages(msgs => [...msgs, { role: 'assistant', content: '', timestamp: null }]);
     }, 0);
 
-    const url = `${RAG_API_URL}?question=${encodeURIComponent(trimmed)}`;
+    // ✅ Используем buildAnswerUrl и getToken из api.js
+    const url = buildAnswerUrl(trimmed);
     const abortController = new AbortController();
     eventSourceRef.current = abortController;
+    console.log('Connecting to SSE stream at', url);
 
     (async () => {
       try {
         const response = await fetch(url, {
-      signal: abortController.signal,
-      headers: {
-        'Accept': 'text/event-stream',
-        'Authorization': `Bearer ${getToken()}`, 
-      },
-    });
+          signal: abortController.signal,
+          headers: {
+            'Accept': 'text/event-stream',
+            'Authorization': `Bearer ${getToken()}`,
+          },
+        });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

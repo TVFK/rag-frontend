@@ -1,10 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { TOKEN_KEY, ROLE_KEY, USER_KEY } from './api/constants.js';
-import ChatPage     from './pages/ChatPage';
-import OperatorPage from './pages/OperatorPage';
-import LoginPage    from './pages/LoginPage';
-import AdminPage    from './pages/AdminPage';
+
+// Ленивый импорт — CSS грузится только при рендере компонента
+const ChatPage     = lazy(() => import('./pages/ChatPage'));
+const OperatorPage = lazy(() => import('./pages/OperatorPage'));
+const AdminPage    = lazy(() => import('./pages/AdminPage'));
+
+// LoginPage можно оставить обычным — он лёгкий и нужен сразу
+import LoginPage from './pages/LoginPage';
 
 function loadAuth() {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -30,7 +34,6 @@ export default function App() {
     setAuth(null);
   };
 
-  // Глобальный обработчик истечения токена (из api.js)
   useEffect(() => {
     const handler = () => handleLogout();
     window.addEventListener('auth:expired', handler);
@@ -40,41 +43,35 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              auth
-                ? <Navigate to="/" replace />
-                : <LoginPage onLogin={handleLogin} />
-            }
-          />
-          <Route
-            path="/"
-            element={
-              auth
-                ? <ChatPage auth={auth} onLogout={handleLogout} />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/operator"
-            element={
-              auth && (auth.role === 'OPERATOR' || auth.role === 'ADMIN')
-                ? <OperatorPage auth={auth} onLogout={handleLogout} />
-                : <Navigate to={auth ? '/' : '/login'} replace />
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              auth && auth.role === 'ADMIN'
-                ? <AdminPage auth={auth} onLogout={handleLogout} />
-                : <Navigate to={auth ? '/' : '/login'} replace />
-            }
-          />
-          <Route path="*" element={<Navigate to={auth ? '/' : '/login'} replace />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route
+              path="/login"
+              element={auth ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />}
+            />
+            <Route
+              path="/"
+              element={auth ? <ChatPage auth={auth} onLogout={handleLogout} /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/operator"
+              element={
+                auth && (auth.role === 'OPERATOR' || auth.role === 'ADMIN')
+                  ? <OperatorPage auth={auth} onLogout={handleLogout} />
+                  : <Navigate to={auth ? '/' : '/login'} replace />
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                auth && auth.role === 'ADMIN'
+                  ? <AdminPage auth={auth} onLogout={handleLogout} />
+                  : <Navigate to={auth ? '/' : '/login'} replace />
+              }
+            />
+            <Route path="*" element={<Navigate to={auth ? '/' : '/login'} replace />} />
+          </Routes>
+        </Suspense>
       </div>
     </BrowserRouter>
   );
