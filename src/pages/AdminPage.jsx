@@ -165,7 +165,6 @@ function CreateUserModal({ onClose, onCreated }) { /* без изменений 
 
 /* ── Страница администрирования ─────────────────────────────────────────── */
 export default function AdminPage({ auth, onLogout }) {
-  useAuthCheck(['ADMIN']);  
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);

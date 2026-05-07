@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { apiUploadDocument } from '../api/api.js';
+import { apiUploadDocument, apiGetDocuments } from '../api/api.js';
 import '../assets/OperatorPage.css';
 import useAuthCheck from '../hooks/useAuthCheck.js';
 
@@ -235,10 +235,30 @@ function Sidebar() {
 
 /* ── Страница оператора (теперь с боковой панелью и аватаром) ────────── */
 export default function OperatorPage({ auth, onLogout }) {
-  useAuthCheck(['OPERATOR', 'ADMIN']);
   const [items, setItems]     = useState([]);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+  // 👇 добавлено: state и функция загрузки списка документов
+  const [docNames, setDocNames]       = useState([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError]     = useState(null);
+
+  const fetchDocs = useCallback(async () => {
+    setDocsLoading(true);
+    setDocsError(null);
+    try {
+      const data = await apiGetDocuments();
+      setDocNames(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setDocsError(e.message);
+    } finally {
+      setDocsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchDocs(); }, [fetchDocs]);
+  // 👆 конец добавления
 
   const addFiles = useCallback((files) => {
     const newItems = [...files].map(file => ({
@@ -265,6 +285,7 @@ export default function OperatorPage({ auth, onLogout }) {
           setItems(prev => prev.map(i =>
             i.id === item.id ? { ...i, status: 'done', progress: 100 } : i
           ));
+          fetchDocs(); // 👈 добавлено: обновление списка после успешной загрузки
         })
         .catch(err => {
           setItems(prev => prev.map(i =>
@@ -272,7 +293,7 @@ export default function OperatorPage({ auth, onLogout }) {
           ));
         });
     });
-  }, []);
+  }, [fetchDocs]);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -363,6 +384,67 @@ export default function OperatorPage({ auth, onLogout }) {
               ))}
             </div>
           )}
+
+          {/* 👇 добавлено: компонент списка загруженных документов */}
+          <div className="op-docs-section">
+            <div className="op-docs-header">
+              <span className="op-docs-title">
+                Файлы в базе знаний
+                {!docsLoading && (
+                  <span className="op-docs-count">{docNames.length}</span>
+                )}
+              </span>
+              <button
+                className="op-docs-refresh"
+                onClick={fetchDocs}
+                disabled={docsLoading}
+                title="Обновить список"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ width: 14, height: 14,
+                    animation: docsLoading ? 'spin 1s linear infinite' : 'none' }}>
+                  <polyline points="23 4 23 10 17 10"/>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Обновить
+              </button>
+            </div>
+
+            {docsError && (
+              <div className="admin-error-banner" style={{ marginTop: 8 }}>
+                {docsError}
+                <button className="admin-retry-btn" onClick={fetchDocs}>Повторить</button>
+              </div>
+            )}
+
+            {docsLoading && !docsError && (
+              <div className="op-docs-loading">
+                <span className="upload-spinner" />
+                Загрузка...
+              </div>
+            )}
+
+            {!docsLoading && !docsError && docNames.length === 0 && (
+              <div className="op-docs-empty">База знаний пуста</div>
+            )}
+
+            {!docsLoading && !docsError && docNames.length > 0 && (
+              <ul className="op-docs-list">
+                {docNames.map((name, i) => (
+                  <li key={i} className="op-docs-item">
+                    <FileIcon type={
+                      name.endsWith('.pdf') ? 'application/pdf'
+                      : name.endsWith('.doc') || name.endsWith('.docx') ? 'application/msword'
+                      : 'text/plain'
+                    } />
+                    <span className="op-docs-name">{name ?? '—'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {/* 👆 конец добавления */}
 
           {/* Allowed types info */}
           <div className="op-info-block">
