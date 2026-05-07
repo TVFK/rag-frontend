@@ -617,6 +617,7 @@
   border-radius: 8px;
   background: #13131f;
   transition: background .15s;
+  justify-content: space-between;
 }
 .op-docs-item:hover { background: #16162a; }
 
@@ -630,3 +631,22 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+.op-docs-delete {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.op-docs-delete:hover:not(:disabled) {
+  color: #f87171;
+  background: rgba(248, 113, 113, .08);
+}
+.op-docs-delete:disabled { opacity: .4; cursor: default; }

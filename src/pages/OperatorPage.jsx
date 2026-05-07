@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { apiUploadDocument, apiGetDocuments } from '../api/api.js';
+import { apiUploadDocument, apiGetDocuments, apiDeleteDocument } from '../api/api.js';
 import '../assets/OperatorPage.css';
-import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -32,6 +31,18 @@ function FileIcon({ type }) {
       strokeLinecap="round" strokeLinejoin="round" style={{width:28,height:28,flexShrink:0}}>
       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
       <polyline points="14 2 14 8 20 8"/>
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}>
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      <line x1="10" y1="11" x2="10" y2="17"/>
+      <line x1="14" y1="11" x2="14" y2="17"/>
     </svg>
   );
 }
@@ -239,10 +250,13 @@ export default function OperatorPage({ auth, onLogout }) {
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  // 👇 добавлено: state и функция загрузки списка документов
+  // Состояния для списка документов
   const [docNames, setDocNames]       = useState([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [docsError, setDocsError]     = useState(null);
+  
+  // Состояние для отслеживания удаляемых документов
+  const [deletingDocs, setDeletingDocs] = useState({});
 
   const fetchDocs = useCallback(async () => {
     setDocsLoading(true);
@@ -258,7 +272,20 @@ export default function OperatorPage({ auth, onLogout }) {
   }, []);
 
   useEffect(() => { fetchDocs(); }, [fetchDocs]);
-  // 👆 конец добавления
+
+  // Обработчик удаления документа
+  const handleDeleteDoc = async (name) => {
+    if (!window.confirm(`Удалить «${name}» из базы знаний?`)) return;
+    setDeletingDocs(prev => ({ ...prev, [name]: true }));
+    try {
+      await apiDeleteDocument(encodeURIComponent(name));
+      setDocNames(prev => prev.filter(n => n !== name));
+    } catch (e) {
+      alert(`Ошибка удаления: ${e.message}`);
+    } finally {
+      setDeletingDocs(prev => { const s = { ...prev }; delete s[name]; return s; });
+    }
+  };
 
   const addFiles = useCallback((files) => {
     const newItems = [...files].map(file => ({
@@ -285,7 +312,7 @@ export default function OperatorPage({ auth, onLogout }) {
           setItems(prev => prev.map(i =>
             i.id === item.id ? { ...i, status: 'done', progress: 100 } : i
           ));
-          fetchDocs(); // 👈 добавлено: обновление списка после успешной загрузки
+          fetchDocs();
         })
         .catch(err => {
           setItems(prev => prev.map(i =>
@@ -385,7 +412,7 @@ export default function OperatorPage({ auth, onLogout }) {
             </div>
           )}
 
-          {/* 👇 добавлено: компонент списка загруженных документов */}
+          {/* Список загруженных документов с возможностью удаления */}
           <div className="op-docs-section">
             <div className="op-docs-header">
               <span className="op-docs-title">
@@ -439,12 +466,21 @@ export default function OperatorPage({ auth, onLogout }) {
                       : 'text/plain'
                     } />
                     <span className="op-docs-name">{name ?? '—'}</span>
+                    <button
+                      className="op-docs-delete"
+                      onClick={() => handleDeleteDoc(name)}
+                      disabled={!!deletingDocs[name]}
+                      title="Удалить из базы знаний"
+                    >
+                      {deletingDocs[name]
+                        ? <span className="upload-spinner" style={{ width: 14, height: 14 }} />
+                        : <TrashIcon />}
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
           </div>
-          {/* 👆 конец добавления */}
 
           {/* Allowed types info */}
           <div className="op-info-block">

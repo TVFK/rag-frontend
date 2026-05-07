@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGetUsers, apiCreateUser, apiUpdateUserRole, apiDeleteUser } from '../api/api.js';
 import '../assets/AdminPage.css';
-import useAuthCheck from '../hooks/useAuthCheck.js';
 
 const ROLES = ['USER', 'OPERATOR', 'ADMIN'];
 
