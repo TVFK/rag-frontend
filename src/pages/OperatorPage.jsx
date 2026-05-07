@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiUploadDocument } from '../api/api.js';
 import '../assets/OperatorPage.css';
 import useAuthCheck from '../hooks/useAuthCheck.js';
@@ -89,7 +90,151 @@ function UploadItem({ item, onRemove }) {
   );
 }
 
-export default function OperatorPage() {
+/* ── Иконки (скопированы из AdminPage) ─────────────────────────────────── */
+function IconBot() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
+  );
+}
+
+function IconChat() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function IconShield() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconLogout() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+/* ── Аватар с выпадающим меню выхода ─────────────────────────────────── */
+function UserAvatar({ auth, onLogout }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <div style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}
+      onMouseDown={e => e.stopPropagation()}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        title={auth?.user ?? 'Профиль'}
+        style={{
+          width: 34, height: 34, borderRadius: '50%',
+          background: '#6366f1', border: '2px solid transparent',
+          cursor: 'pointer', color: '#fff', fontWeight: 700,
+          fontSize: 13, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', flexShrink: 0,
+          transition: 'border-color .15s',
+          ...(open ? { borderColor: '#818cf8' } : {}),
+        }}
+      >
+        {(auth?.user?.[0] ?? '?').toUpperCase()}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 42,
+          background: '#13131f', border: '1px solid #2a2a3e',
+          borderRadius: 10, padding: 6, minWidth: 170,
+          zIndex: 300, boxShadow: '0 8px 28px rgba(0,0,0,.55)',
+        }}>
+          <div style={{
+            padding: '6px 10px 10px',
+            borderBottom: '1px solid #2a2a3e', marginBottom: 4,
+          }}>
+            <div style={{ fontSize: 11, color: '#555', marginBottom: 3 }}>Вы вошли как</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{auth?.user}</div>
+          </div>
+          <button
+            onClick={onLogout}
+            style={{
+              width: '100%', padding: '7px 10px',
+              background: 'transparent', border: 'none',
+              borderRadius: 6, cursor: 'pointer',
+              color: '#f87171', fontSize: 13,
+              textAlign: 'left', display: 'flex',
+              alignItems: 'center', gap: 8,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <IconLogout />
+            Выйти
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Боковая панель ─────────────────────────────────────────────────── */
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <div className="sidebar-logo"><IconBot /></div>
+        <div className="sidebar-brand-text">
+          <div className="sidebar-title">RAG Ассистент</div>
+          <div className="sidebar-sub">IT Admin</div>
+        </div>
+      </div>
+
+      <nav className="sidebar-nav-links" style={{ marginTop: 24 }}>
+        <Link to="/" className="sidebar-nav-link">
+          <IconChat />
+          Чат с ИИ
+        </Link>
+        <Link to="/operator" className="sidebar-nav-link">
+          <IconShield />
+          Панель оператора
+        </Link>
+        <Link to="/admin" className="sidebar-nav-link">
+          <IconShield />
+          Панель администратора
+        </Link>
+      </nav>
+
+      <div className="sidebar-footer">
+        <div className="sidebar-status">
+          <span className="status-dot" />
+          Сервер онлайн
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ── Страница оператора (теперь с боковой панелью и аватаром) ────────── */
+export default function OperatorPage({ auth, onLogout }) {
   useAuthCheck(['OPERATOR', 'ADMIN']);
   const [items, setItems]     = useState([]);
   const [dragging, setDragging] = useState(false);
@@ -150,87 +295,91 @@ export default function OperatorPage() {
   const uploadingCount = items.filter(i => i.status === 'uploading').length;
 
   return (
-    <div className="op-root">
-      <div className="op-inner">
-        {/* Page header */}
-        <div className="op-page-header">
-          <div>
-            <h2 className="op-title">Загрузка документов</h2>
-            <p className="op-desc">
-              Добавьте файлы для обработки и индексации в базу знаний RAG-системы
-            </p>
-          </div>
+    <div className="op-layout">
+      <Sidebar />
+
+      <main className="op-main">
+        {/* Верхняя панель с заголовком, кнопкой очистки и аватаром */}
+        <div className="op-topbar">
+          <h2 className="op-title">Загрузка документов</h2>
           {doneCount > 0 && !uploadingCount && (
             <button className="op-clear-btn" onClick={clearDone}>
               Очистить завершённые
             </button>
           )}
+          <UserAvatar auth={auth} onLogout={onLogout} />
         </div>
 
-        {/* Drop zone */}
-        <div
-          className={`drop-zone${dragging ? ' drop-zone--active' : ''}`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={ALLOWED_EXT.join(',')}
-            onChange={handleFileInput}
-            style={{ display: 'none' }}
-          />
-          <div className="drop-zone-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-          </div>
-          <div className="drop-zone-text">
-            {dragging ? 'Отпустите файлы' : 'Перетащите файлы или нажмите для выбора'}
-          </div>
-          <div className="drop-zone-hint">
-            {ALLOWED_EXT.join('  ·  ')}
-          </div>
-        </div>
+        <div className="op-content">
+          <p className="op-desc">
+            Добавьте файлы для обработки и индексации в базу знаний RAG-системы
+          </p>
 
-        {/* File list */}
-        {items.length > 0 && (
-          <div className="upload-list">
-            <div className="upload-list-header">
-              <span>Файлы · {items.length}</span>
-              {uploadingCount > 0 && (
-                <span className="upload-list-active">
-                  Загружается {uploadingCount}...
-                </span>
-              )}
+          {/* Drop zone */}
+          <div
+            className={`drop-zone${dragging ? ' drop-zone--active' : ''}`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={ALLOWED_EXT.join(',')}
+              onChange={handleFileInput}
+              style={{ display: 'none' }}
+            />
+            <div className="drop-zone-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
             </div>
-            {items.map(item => (
-              <UploadItem key={item.id} item={item} onRemove={removeItem} />
-            ))}
+            <div className="drop-zone-text">
+              {dragging ? 'Отпустите файлы' : 'Перетащите файлы или нажмите для выбора'}
+            </div>
+            <div className="drop-zone-hint">
+              {ALLOWED_EXT.join('  ·  ')}
+            </div>
           </div>
-        )}
 
-        {/* Allowed types info */}
-        <div className="op-info-block">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-            strokeLinecap="round" strokeLinejoin="round" style={{width:15,height:15,flexShrink:0,marginTop:1}}>
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <div>
-            <strong>Поддерживаемые форматы:</strong> PDF, TXT.
-            Загруженные документы будут обработаны и добавлены в базу знаний системы.
-            После индексации ИИ-ассистент сможет использовать эти данные для ответов.
+          {/* File list */}
+          {items.length > 0 && (
+            <div className="upload-list">
+              <div className="upload-list-header">
+                <span>Файлы · {items.length}</span>
+                {uploadingCount > 0 && (
+                  <span className="upload-list-active">
+                    Загружается {uploadingCount}...
+                  </span>
+                )}
+              </div>
+              {items.map(item => (
+                <UploadItem key={item.id} item={item} onRemove={removeItem} />
+              ))}
+            </div>
+          )}
+
+          {/* Allowed types info */}
+          <div className="op-info-block">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+              strokeLinecap="round" strokeLinejoin="round" style={{width:15,height:15,flexShrink:0,marginTop:1}}>
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div>
+              <strong>Поддерживаемые форматы:</strong> PDF, TXT.
+              Загруженные документы будут обработаны и добавлены в базу знаний системы.
+              После индексации ИИ-ассистент сможет использовать эти данные для ответов.
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,37 +1,325 @@
-.admin-root {
-  flex: 1;
-  overflow-y: auto;
-  padding: 36px 24px;
+/* ═══════════════════════════════════════
+   ADMIN LAYOUT (sidebar + main)
+═══════════════════════════════════════ */
+
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
   background: var(--bg-base);
+  overflow: hidden;
 }
 
-.admin-inner {
-  max-width: 860px;
-  margin: 0 auto;
+/* декоративный фоновый блик (как в чате) */
+.admin-layout::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70vw;
+  height: 60vh;
+  background: radial-gradient(ellipse at center,
+    rgba(79, 156, 249, 0.045) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  position: relative;
+  z-index: 20;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4,0,0.2,1),
+              border-color 0.25s ease;
 }
 
+.sidebar-header {
+  padding: 18px 14px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4f9cf9, #1e6fd4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 14px var(--accent-glow);
+  flex-shrink: 0;
+}
+
+.sidebar-logo svg {
+  width: 16px;
+  height: 16px;
+  color: white;
+}
+
+.sidebar-brand-text {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.sidebar-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+/* навигационные ссылки (вместо списка чатов) */
+.sidebar-nav-links {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px 0;
+  gap: 4px;
+  flex: 1;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-nav-link:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.sidebar-nav-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* точка статуса (онлайн) */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3de87a;
+  box-shadow: 0 0 7px rgba(61,232,122,0.55);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.status-dot.offline {
+  background: var(--text-muted);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* ═══════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════ */
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* верхняя панель с заголовком и аватаром */
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,10,15,0.75);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+/* заголовок внутри верхней панели */
+.admin-topbar .admin-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* контентная область (прокручиваемая) */
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* ═══════════════════════════════════════
+   USER AVATAR & DROPDOWN
+═══════════════════════════════════════ */
+
+.avatar-wrapper {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #6366f1;
+  border: 2px solid transparent;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+}
+
+.avatar-btn:hover,
+.avatar-btn:focus-visible {
+  border-color: #818cf8;
+  outline: none;
+}
+
+.avatar-dropdown {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  background: #13131f;
+  border: 1px solid #2a2a3e;
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 170px;
+  z-index: 300;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+  animation: fade-up 0.15s ease both;
+}
+
+.avatar-dropdown-user {
+  padding: 6px 10px 10px;
+  border-bottom: 1px solid #2a2a3e;
+  margin-bottom: 4px;
+}
+
+.avatar-dropdown-label {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.avatar-dropdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.avatar-logout-btn {
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #f87171;
+  font-size: 13px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  transition: background 0.14s ease;
+}
+
+.avatar-logout-btn:hover {
+  background: rgba(248,113,113,0.08);
+}
+
+.avatar-logout-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════
+   АДМИН‑КОНТЕНТ: старые стили адаптированы
+   (без .admin-root / .admin-inner)
+═══════════════════════════════════════ */
+
+/* Заголовок и кнопка создания */
 .admin-page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  margin-bottom: 24px;
 }
 
-.admin-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
-  margin-bottom: 6px;
-}
-
-.admin-desc {
+.admin-page-header .admin-desc {
   font-size: 13.5px;
   color: var(--text-secondary);
   line-height: 1.5;
+  margin: 0;
 }
 
 .admin-add-btn {
@@ -59,15 +347,18 @@
   box-shadow: 0 4px 18px var(--accent-glow);
 }
 
-.admin-add-btn svg { width: 15px; height: 15px; }
+.admin-add-btn svg {
+  width: 15px;
+  height: 15px;
+}
 
-/* ─── Toolbar ─── */
-
+/* Панель инструментов (поиск + статистика) */
 .admin-toolbar {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
 .admin-search-wrap {
@@ -100,8 +391,13 @@
   transition: border-color 0.18s ease;
 }
 
-.admin-search:focus { border-color: rgba(79,156,249,0.4); }
-.admin-search::placeholder { color: var(--text-muted); }
+.admin-search:focus {
+  border-color: rgba(79,156,249,0.4);
+}
+
+.admin-search::placeholder {
+  color: var(--text-muted);
+}
 
 .admin-stats {
   display: flex;
@@ -141,8 +437,7 @@
   margin-top: 1px;
 }
 
-/* ─── Table ─── */
-
+/* Таблица пользователей */
 .admin-table-wrap {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -173,10 +468,17 @@
   transition: background 0.12s ease;
 }
 
-.admin-table tbody tr:last-child { border-bottom: none; }
-.admin-table tbody tr:hover { background: var(--bg-elevated); }
+.admin-table tbody tr:last-child {
+  border-bottom: none;
+}
 
-.admin-row--me { background: rgba(79,156,249,0.03); }
+.admin-table tbody tr:hover {
+  background: var(--bg-elevated);
+}
+
+.admin-row--me {
+  background: rgba(79,156,249,0.03);
+}
 
 .admin-table td {
   padding: 14px 20px;
@@ -190,8 +492,7 @@
   padding: 40px 20px !important;
 }
 
-/* ─── User cell ─── */
-
+/* Ячейка пользователя */
 .admin-user-cell {
   display: flex;
   align-items: center;
@@ -244,8 +545,7 @@
   margin-top: 2px;
 }
 
-/* ─── Role pills ─── */
-
+/* Пилюли ролей */
 .role-pill-group {
   display: flex;
   align-items: center;
@@ -298,8 +598,7 @@
   font-weight: 500;
 }
 
-/* ─── Delete button ─── */
-
+/* Кнопка удаления */
 .admin-delete-btn {
   width: 30px;
   height: 30px;
@@ -320,10 +619,12 @@
   color: #f87171;
 }
 
-.admin-delete-btn svg { width: 15px; height: 15px; }
+.admin-delete-btn svg {
+  width: 15px;
+  height: 15px;
+}
 
-/* ─── Loading / Error ─── */
-
+/* Loading & Error */
 .admin-loading {
   display: flex;
   align-items: center;
@@ -344,6 +645,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
 .admin-retry-btn {
@@ -359,10 +661,11 @@
   transition: all 0.14s ease;
 }
 
-.admin-retry-btn:hover { background: rgba(239,68,68,0.18); }
+.admin-retry-btn:hover {
+  background: rgba(239,68,68,0.18);
+}
 
-/* ─── Modal ─── */
-
+/* Модальное окно (без изменений, только добавлен z-index повыше) */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -421,8 +724,15 @@
   transition: all 0.14s ease;
 }
 
-.modal-close:hover { background: var(--bg-elevated); color: var(--text-secondary); }
-.modal-close svg { width: 15px; height: 15px; }
+.modal-close:hover {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.modal-close svg {
+  width: 15px;
+  height: 15px;
+}
 
 .modal-form {
   padding: 20px 24px 24px;
@@ -459,9 +769,17 @@
   transition: border-color 0.18s ease;
 }
 
-.modal-input:focus { border-color: rgba(79,156,249,0.4); }
-.modal-input::placeholder { color: var(--text-muted); }
-.modal-input:disabled { opacity: 0.5; }
+.modal-input:focus {
+  border-color: rgba(79,156,249,0.4);
+}
+
+.modal-input::placeholder {
+  color: var(--text-muted);
+}
+
+.modal-input:disabled {
+  opacity: 0.5;
+}
 
 .modal-eye {
   position: absolute;
@@ -476,9 +794,10 @@
   transition: opacity 0.14s ease;
 }
 
-.modal-eye:hover { opacity: 0.8; }
+.modal-eye:hover {
+  opacity: 0.8;
+}
 
-/* Role select in modal */
 .role-select-group {
   display: flex;
   gap: 6px;
@@ -498,17 +817,34 @@
   text-align: center;
 }
 
-.role-select-btn:hover:not(:disabled) { border-color: var(--border-bright); color: var(--text-secondary); }
-.role-select-btn:disabled { opacity: 0.5; }
+.role-select-btn:hover:not(:disabled) {
+  border-color: var(--border-bright);
+  color: var(--text-secondary);
+}
+
+.role-select-btn:disabled {
+  opacity: 0.5;
+}
 
 .role-select-btn.active-user {
-  background: var(--accent-dim); border-color: rgba(79,156,249,0.35); color: var(--accent); font-weight: 500;
+  background: var(--accent-dim);
+  border-color: rgba(79,156,249,0.35);
+  color: var(--accent);
+  font-weight: 500;
 }
+
 .role-select-btn.active-operator {
-  background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.3); color: #fb923c; font-weight: 500;
+  background: rgba(251,146,60,0.1);
+  border-color: rgba(251,146,60,0.3);
+  color: #fb923c;
+  font-weight: 500;
 }
+
 .role-select-btn.active-admin {
-  background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #c084fc; font-weight: 500;
+  background: rgba(168,85,247,0.1);
+  border-color: rgba(168,85,247,0.3);
+  color: #c084fc;
+  font-weight: 500;
 }
 
 .modal-error {
@@ -539,7 +875,10 @@
   transition: all 0.14s ease;
 }
 
-.modal-cancel-btn:hover:not(:disabled) { border-color: var(--border-bright); color: var(--text-primary); }
+.modal-cancel-btn:hover:not(:disabled) {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
 
 .modal-submit-btn {
   flex: 2;
@@ -560,11 +899,18 @@
   box-shadow: 0 2px 10px var(--accent-glow);
 }
 
-.modal-submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 18px var(--accent-glow); }
-.modal-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.modal-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px var(--accent-glow);
+}
 
-/* ─── Shared spinner ─── */
+.modal-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
+/* Общий спиннер */
 .btn-spinner {
   display: inline-block;
   width: 16px;
@@ -576,5 +922,29 @@
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fade-up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Скроллбары */
+::-webkit-scrollbar {
+  width: var(--scrollbar-w);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

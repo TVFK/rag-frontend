@@ -135,6 +135,14 @@ const IconSettings = () => (
   </svg>
 );
 
+const IconLogout = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 // ─── Message content renderer ─────────────────────────────────────────────────
 
 function MessageContent({ text, streaming }) {
@@ -172,6 +180,74 @@ function Message({ role, content, timestamp, streaming }) {
       <div className="message-bubble">
         <MessageContent text={content} streaming={streaming} />
       </div>
+    </div>
+  );
+}
+
+// ─── User Avatar with logout dropdown ────────────────────────────────────────
+function UserAvatar({ auth, onLogout }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <div
+      style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      <button
+        onClick={() => setOpen(o => !o)}
+        title={auth?.user ?? 'Профиль'}
+        style={{
+          width: 34, height: 34, borderRadius: '50%',
+          background: '#6366f1', border: '2px solid transparent',
+          cursor: 'pointer', color: '#fff', fontWeight: 700,
+          fontSize: 13, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', flexShrink: 0,
+          transition: 'border-color .15s',
+          ...(open ? { borderColor: '#818cf8' } : {}),
+        }}
+      >
+        {(auth?.user?.[0] ?? '?').toUpperCase()}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 42,
+          background: '#13131f', border: '1px solid #2a2a3e',
+          borderRadius: 10, padding: 6, minWidth: 170,
+          zIndex: 300, boxShadow: '0 8px 28px rgba(0,0,0,.55)',
+        }}>
+          <div style={{
+            padding: '6px 10px 10px',
+            borderBottom: '1px solid #2a2a3e', marginBottom: 4,
+          }}>
+            <div style={{ fontSize: 11, color: '#555', marginBottom: 3 }}>Вы вошли как</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{auth?.user}</div>
+          </div>
+          <button
+            onClick={onLogout}
+            style={{
+              width: '100%', padding: '7px 10px',
+              background: 'transparent', border: 'none',
+              borderRadius: 6, cursor: 'pointer',
+              color: '#f87171', fontSize: 13,
+              textAlign: 'left', display: 'flex',
+              alignItems: 'center', gap: 8,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <IconLogout />
+            Выйти
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,7 +329,7 @@ function Sidebar({ chats, activeChatId, onSelect, onCreate, onDelete, connected,
 
 // ─── ChatPage ─────────────────────────────────────────────────────────────────
 
-export default function ChatPage({ auth }) {
+export default function ChatPage({ auth, onLogout }) {
   useAuthCheck(['USER', 'OPERATOR', 'ADMIN']);
 
   // ── Init state from localStorage ──────────────────────────────────────────
@@ -526,6 +602,8 @@ export default function ChatPage({ auth }) {
               {messages.length} сообщ.
             </div>
           )}
+          {/* Logout button */}
+          <UserAvatar auth={auth} onLogout={onLogout} />
         </header>
 
         <div className="messages-container">
