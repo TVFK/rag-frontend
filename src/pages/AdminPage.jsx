@@ -13,8 +13,28 @@ const ROLE_BADGE = {
 
 /* ── Иконки ─────────────────────────────────────────────────────────────── */
 
-function PlusIcon() { /* ... без изменений */ }
-function TrashIcon() { /* ... без изменений */ }
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+      <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+    </svg>
+  );
+}
+
 function IconBot() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -24,6 +44,7 @@ function IconBot() {
     </svg>
   );
 }
+
 function IconChat() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -32,6 +53,7 @@ function IconChat() {
     </svg>
   );
 }
+
 function IconShield() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -40,6 +62,7 @@ function IconShield() {
     </svg>
   );
 }
+
 function IconLogout() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -47,15 +70,6 @@ function IconLogout() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  );
-}
-function IconSettings() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
@@ -160,7 +174,114 @@ function Sidebar() {
 }
 
 /* ── Модальное окно создания пользователя ────────────────────────────────── */
-function CreateUserModal({ onClose, onCreated }) { /* без изменений */ }
+function CreateUserModal({ onClose, onCreated }) {
+  const [form, setForm] = useState({ username: '', password: '', role: 'USER' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showPass, setShowPass] = useState(false);
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.username.trim() || !form.password.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const created = await apiCreateUser(form.username.trim(), form.password, form.role);
+      onCreated(created);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Новый пользователь</h3>
+          <button className="modal-close" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form className="modal-form" onSubmit={handleSubmit}>
+          <div className="modal-field">
+            <label className="modal-label">Логин</label>
+            <input
+              className="modal-input"
+              type="text"
+              placeholder="username"
+              value={form.username}
+              onChange={set('username')}
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+
+          <div className="modal-field">
+            <label className="modal-label">Пароль</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                className="modal-input"
+                type={showPass ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={set('password')}
+                disabled={loading}
+                style={{ paddingRight: 42 }}
+              />
+              <button type="button" className="modal-eye" onClick={() => setShowPass(s => !s)}>
+                {showPass ? '👁' : '👁‍🗨'}
+              </button>
+            </div>
+          </div>
+
+          <div className="modal-field">
+            <label className="modal-label">Роль</label>
+            <div className="role-select-group">
+              {ROLES.map(r => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`role-select-btn${form.role === r ? ' active-' + r.toLowerCase() : ''}`}
+                  onClick={() => setForm(f => ({ ...f, role: r }))}
+                  disabled={loading}
+                >
+                  {ROLE_BADGE[r].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="modal-error">{error}</div>
+          )}
+
+          <div className="modal-actions">
+            <button type="button" className="modal-cancel-btn" onClick={onClose} disabled={loading}>
+              Отмена
+            </button>
+            <button
+              type="submit"
+              className="modal-submit-btn"
+              disabled={loading || !form.username.trim() || !form.password.trim()}
+            >
+              {loading ? <span className="btn-spinner" /> : 'Создать'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 /* ── Страница администрирования ─────────────────────────────────────────── */
 export default function AdminPage({ auth, onLogout }) {
@@ -172,12 +293,56 @@ export default function AdminPage({ auth, onLogout }) {
   const [deleteLoading, setDeleteLoading] = useState({});
   const [search, setSearch]       = useState('');
 
-  const fetchUsers = useCallback(async () => { /* без изменений */ }, []);
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiGetUsers();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const handleRoleChange = async (user, newRole) => { /* без изменений */ };
-  const handleDelete = async (user) => { /* без изменений */ };
-  const handleCreated = (newUser) => { /* без изменений */ };
+  const handleRoleChange = async (user, newRole) => {
+    if (user.role === newRole) return;
+    setRoleLoading(r => ({ ...r, [user.id]: true }));
+    try {
+      await apiUpdateUserRole(user.id, newRole);
+      setUsers(prev => prev.map(u =>
+        u.id === user.id ? { ...u, role: newRole } : u
+      ));
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    } finally {
+      setRoleLoading(r => ({ ...r, [user.id]: false }));
+    }
+  };
+
+  const handleDelete = async (user) => {
+    if (!confirm(`Удалить пользователя «${user.username}»?`)) return;
+    setDeleteLoading(d => ({ ...d, [user.id]: true }));
+    try {
+      await apiDeleteUser(user.id);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    } finally {
+      setDeleteLoading(d => ({ ...d, [user.id]: false }));
+    }
+  };
+
+  const handleCreated = (newUser) => {
+    if (newUser && newUser.id) {
+      setUsers(prev => [...prev, newUser]);
+    } else {
+      fetchUsers();
+    }
+  };
 
   const filtered = users.filter(u =>
     u.username?.toLowerCase().includes(search.toLowerCase())
@@ -188,14 +353,12 @@ export default function AdminPage({ auth, onLogout }) {
       <Sidebar />
 
       <main className="admin-main">
-        {/* Верхняя панель с заголовком и аватаром */}
         <div className="admin-topbar">
           <h2 className="admin-title">Управление пользователями</h2>
           <UserAvatar auth={auth} onLogout={onLogout} />
         </div>
 
         <div className="admin-content">
-          {/* Кнопка создания + статистика + поиск */}
           <div className="admin-page-header">
             <div>
               <p className="admin-desc">
@@ -236,7 +399,6 @@ export default function AdminPage({ auth, onLogout }) {
             </div>
           </div>
 
-          {/* Таблица пользователей (весь существующий код загрузки/ошибок/таблицы) */}
           {loading && (
             <div className="admin-loading">
               <span className="btn-spinner" style={{width:24,height:24,borderWidth:2}} />
